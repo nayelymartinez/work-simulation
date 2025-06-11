@@ -1,10 +1,10 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { StuffDocumentsChain } from 'langchain/chains';
+import { loadSummarizationChain } from 'langchain/chains';
 import { PromptTemplate } from '@langchain/core/prompts';
 import type { ConfigService } from '@nestjs/config';
 
 const TWO_SENTENCE_SUMMARY_PROMPT = PromptTemplate.fromTemplate(
-  `Summarize the following text in no more than two sentences:\n\n{text}\n\nSummary:`,
+  `Summarize the following text concisely in no more than one sentence and no more than 30 words:\n\n{text}\n\nSummary:`,
 );
 
 function getLLM(configService: ConfigService) {
@@ -14,6 +14,12 @@ function getLLM(configService: ConfigService) {
   }
   return new ChatOpenAI({
     openAIApiKey,
+    configuration: {
+      baseURL: 'https://oai.helicone.ai/v1',
+      defaultHeaders: {
+        'Helicone-Auth': `Bearer ${configService.get<string>('HELICONE_API_KEY')}`,
+      },
+    },
     modelName: configService.get<string>('SUMMARIZER_LLM') ?? 'gpt-4-turbo',
   });
 }
@@ -24,19 +30,15 @@ function getLLM(configService: ConfigService) {
 export async function summarizeChunkWithLangChain(
   chunk: string,
   configService: ConfigService,
+  concise: boolean = false,
 ): Promise<string> {
   const llm = getLLM(configService);
-
-  // manually instantiate a "stuff" chain with our custom prompt
-  const chain = new StuffDocumentsChain({
-    llm,
-    prompt: TWO_SENTENCE_SUMMARY_PROMPT,
-    // this must match the variable in your template: {text}
-    documentVariableName: 'text',
+  const chain = loadSummarizationChain(llm, {
+    type: 'stuff',
+    prompt: concise ? TWO_SENTENCE_SUMMARY_PROMPT : undefined,
   });
-
-  const { text } = await chain.call({
+  const result = (await chain.call({
     input_documents: [{ pageContent: chunk }],
-  });
-  return text.trim();
+  })) as { text: string };
+  return result.text.trim();
 }

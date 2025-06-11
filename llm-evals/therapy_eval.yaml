@@ -1,0 +1,40 @@
+# Incorporates both custom grading logic (llm_rubric) and OpenAI Evals's built-in metrics (accuracy, f1)
+name: therapist_agent_qa
+
+completion_fns:
+  - name: http_agent
+    type: python
+    module: evals.agent_http_completion
+    func: get_agent_completion_fn
+
+tasks:
+  - name: transcript_qa
+    type: graded_completion
+    data_path: llm-evals/therapy_questions.jsonl
+      You are an AI assistant supporting a therapist by answering questions about a session transcript.
+      Always assume the question comes from the therapist.
+      Your answers should be:
+        • Concise and focused  
+        • Factually accurate (quote transcript passages when relevant)  
+        • Helpful in exploring the patient’s concerns  
+      Question: {input}
+      Answer:
+
+    # TODO: Tweak rubric to potentially increase accuracy weight?
+    # Use LLM‐based rubric to grade not just exact matches but
+    # accuracy, conciseness, and helpfulness.
+    grade_fn:
+      name: llm_rubric
+      # Points % breakdown: accuracy 50%, conciseness 25%, helpfulness 25%
+      rubric: |
+        You are a grading assistant.  Evaluate the model’s answer on three axes:
+          1. Accuracy (0–5 points): Is the answer factually correct and grounded in the transcript?
+          2. Conciseness (0–2 points): Is the response as brief as possible without losing clarity?
+          3. Helpfulness (0–3 points): Does it give the therapist actionable insight or clarity?
+        Provide a JSON object with fields “accuracy”, “conciseness”, “helpfulness”, and “total” (sum).
+
+metrics:
+  - accuracy # for quick pass/fail on exact match of key facts
+  - f1 # measures overlap where exact match is okay
+  - llm_rubric # custom 10-point rubric (see above)
+

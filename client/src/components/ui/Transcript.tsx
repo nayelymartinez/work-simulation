@@ -17,11 +17,12 @@ import {
   AccordionIcon,
   Flex,
   useColorModeValue,
+  Select,
 } from "@chakra-ui/react";
 
 export function Transcript() {
   const userId = 1;
-  const transcriptId = 1;
+  const [transcriptId, setTranscriptId] = useState(1);
 
   // Transcript
   const [transcript, setTranscript] = useState("");
@@ -90,14 +91,44 @@ export function Transcript() {
   const bgSummary = useColorModeValue("blue.50", "blue.900");
   const bgQA = useColorModeValue("gray.50", "gray.800");
   const bgAnswer = useColorModeValue("green.50", "green.900");
-  const bgTrans = useColorModeValue("gray.50", "gray.800");
   const headerBg = useColorModeValue("teal.500", "teal.700");
 
   return (
-    <Box maxW="3xl" mx="auto" p={6}>
+    <Box maxW="5xl" mx="auto" p={6}>
       {/* HEADER */}
-      <Flex justify="flex-end" mb={4}>
-        <Box bg="purple.500" px={4} py={2} rounded="md" shadow="md">
+
+      <Flex justify="space-between" mb={4}>
+        <Select
+          value={transcriptId}
+          onChange={(e) => setTranscriptId(+e.target.value)}
+          width="350px"
+          variant="filled"
+          /* base (resting) state */
+          bg="orange.100"
+          border="2px solid"
+          borderColor="orange.300"
+          color="orange.800"
+          /* hover: slightly darker orange */
+          _hover={{
+            bg: "orange.200", // darker than 100
+            borderColor: "orange.300",
+          }}
+          /* focus: keep hover look + outline/ring */
+          _focus={{
+            bg: "orange.200",
+            borderColor: "orange.400",
+            boxShadow: "0 0 0 1px var(--chakra-colors-orange-400)",
+          }}
+          focusBorderColor="orange.400"
+          fontWeight="medium"
+          rounded="xl"
+          shadow="sm"
+        >
+          <option value={1}>Patient: Natalia Gomez (MRN #: 710)</option>
+          <option value={2}>Patient: Alex Gonzalez (MRN #: 711)</option>
+        </Select>
+
+        <Box bg="rgb(133, 159, 61)" px={4} py={2} rounded="md" shadow="md">
           <Text color="white" fontWeight="medium" fontSize="sm">
             Therapist: Dr. Doe
           </Text>
@@ -153,7 +184,7 @@ export function Transcript() {
           mb={6}
         >
           <Heading as="h2" size="md" color="blue.700" mb={2}>
-            Transcript Summary
+            Session Summary
           </Heading>
           <Text whiteSpace="pre-wrap">{summary}</Text>
         </Box>
@@ -219,10 +250,12 @@ export function Transcript() {
           <Accordion allowToggle>
             <AccordionItem border="none">
               <AccordionButton
-                _expanded={{ bg: "blue.100" }}
+                _expanded={{ bg: "blue.400" }}
                 px={4}
                 py={2}
                 rounded="md"
+                _hover={{ bg: "blue.100" }}
+                bg="gray.200"
               >
                 <Box flex="1" textAlign="left" fontWeight="medium">
                   View Transcript

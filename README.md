@@ -1,35 +1,61 @@
-# Blueprint AI Work Simulation Exercise
+# Blueprint AI: Transcript Q&A Agent
 
-This repository contains a full-stack application scaffold for a work simulation exercise. The goal is to evaluate your ability to work with AI technologies and build a simple question-answering agent.
+A question-answering agent integrated into a full-stack application for a work simulation exercise.
 
-## Project Overview
+##### Key Highlights:
 
-The project consists of:
+- The agent uses Redis to preserve context window across each call (critical for context aware responses if the therapist engages in multi-turn Q&A)
+- The agent uses Langchain to chunk + summarize transcript content if it passes a certain token threshold (8k+)
+- LLM evaluation + refinement was done via OpenAi evals
+- Helicone is used for (future) production-ready observability + performance monitoring/cost optimization
 
-- A React frontend (`client`)
-- A NestJS backend (`api`)
-- A PostgreSQL database
-- A sample transcript for the AI agent to analyze
+#### Future Improvements:
+
+- **More in-depth LLM eval**: The agent was run through OpenAI's Eval framework (see `/llm-evals`) to get some quick wins in the prompting. However, LLM evals just take _a lot_ more time to do well - the best ones still require manual annotation on dev, training, and validation sets (typically that task alone takes ~3 hours). If there was more time, this would be the highest priority for shipping a production-grade, HIPAA compliant Q&A agent.
+- **RAG** approach (instead of LangChain summarization): Normally, any content under <50k does not need RAG. A typical transcript (plus the forced "context window" added here for previous Q&As) for a 1-hour session does not normally exceed ~8-9k tokens, which is the reason a more simple Langchain chunk + summary was used here.
+- **UI Design**: Self-explanatory once you run the app !\_!
+
+## Project Structure
+
+- `/api` - Backend Node.js application
+- `/client` - Frontend React application
+- `/llm-evals` - LLM evaluation via OpenAI Evals (includes eval rubric, metrics, and sample outputs)
+- `/api/data` - Contains the transcript file **PLUS** an extended version with more words (tokens) to test chunking LLM calls
 
 ## Setup
 
-0. Under the root directory, create your .env file and populate with the following:
+1. Under the root directory, create your .env file and populate with the following:
+
    ```
    OPENAI_API_KEY={YOUR_OPENAI_API_KEY}
+   HELICONE_API_KEY={YOUR_HELICONE_API_KEY}
    DATABASE_URL=postgres://postgres:postgres@db:5432/appdb
+   AGENT_URL=http://localhost:3000/agent/transcript/question
    MAX_SUMMARY_TOKENS=6000
    AGENT_LLM=gpt-4-turbo
    SUMMARIZER_LLM=gpt-4.1
    ```
-1. From the root of the project, start the application:
+
+   Alternatively, if you don't have a [Helicone](https://us.helicone.ai/prompts) account, you can remove its integration in agent.service.ts and langchain.service.ts
+
+2. From the root of the project, start the application:
+
    ```bash
    docker compose up --build
    ```
-2. In a new terminal, run the database migrations:
+
+   Under the hood, this will:
+
+   - Start up Redis first
+   - Start DB,
+   - Run the DB migrations
+   - Run the loadTranscript.ts script to load the transcript into DB
+
+3. In a new terminal, run the database migrations:
    ```bash
    docker compose run api npm run migration:up
    ```
-3. In /api:
+4. In /api:
 
    ```
    docker compose run --rm api npx ts-node scripts/loadTranscript.ts
@@ -37,23 +63,14 @@ The project consists of:
 
    This will load the transcript into the DB
 
-4. Visit [localhost:5173](http://localhost:5173) to verify the application is running
+5. Visit [localhost:5173](http://localhost:5173) to verify the application is running
 
 ## Frontend:
-
-#### Core Technologies
 
 - **React** – JavaScript library for building user interfaces.
 - **TypeScript** – Typed superset of JavaScript for safer, scalable code.
 - **Vite** – Fast development server and bundler for modern web apps.
-
-#### UI & Styling
-
 - **Chakra UI** – Accessible, composable component library.
-
-#### HTTP & State
-
-- **Axios** – Promise-based HTTP client for the browser.
 
 ## Backend:
 
@@ -61,82 +78,51 @@ This API is built with **NestJS**. Additional frameworks and libraries added inc
 
 #### AI & Language Processing
 
-- **LangChain** (`langchain`, `@langchain/core`, `@langchain/openai`) – Framework for building language model applications.
-- **OpenAI SDK** (`openai`) – Interacts with OpenAI's models for generating completions, embeddings, etc.
-- **GPT-3 Encoder** (`gpt-3-encoder`) – Tokenization utility for managing LLM input/output lengths.
-
-#### Database & ORM
-
-- **Kysely** – Type-safe SQL query builder for TypeScript.
-- **pg** – PostgreSQL driver for Node.js.
-- **db-migrate / db-migrate-pg** – Lightweight, CLI-driven database migration tool.
-
-#### Validation & Transformation
-
-- **class-validator** – Declarative validation for objects.
-- **class-transformer** – Transforms plain objects into class instances.
+- **LangChain** – Framework for building language model applications.
+- **OpenAI SDK** Uses OpenAI's models for generating completions, embeddings, etc.
+- **GPT-3 Encoder** – Tokenization utility for managing LLM input/output lengths, necessary for chunking + summarization.
+- **OpenAI Evals** - LLM agent evals!
+- **Helicone** - Observability for LLMs APIs that logs each call + provides analysis (great for improving LLM efficiency/cost tradeoffs)
 
 #### Caching & Queuing
 
-- **ioredis** – Fast Redis client, often used for caching, pub/sub, or queues.
+- **ioredis** – Redis client to store questions and answers previously asked + "force" a context window (OpenAI does not keep context between API calls)
 
-## The Challenge
+## Agent Evaluation:s
 
-Your task is to create a simple AI agent that can answer questions about the contents of a provided transcript. The transcript will be available in the `api/data/transcript.txt` file.
+Our favorite part! LLM evaluation here's done with the [OpenAI Evals](https://platform.openai.com/docs/guides/evals) framework, and manual evaluation was done to improve the prompt (`AGENT_SYSTEM_PROMPT`).
 
-### Requirements
+**Note:** This app uses the OpenAI Evals framework to improve agent performance (see `/evals`). Fair warning: It is a pretty large package, so may take a while to install.
 
-1. Create an endpoint in the API that accepts questions about the transcript
-2. Implement a basic agent that can:
-   - Read and understand the transcript
-   - Answer questions about its contents
-   - Provide relevant quotes or references when appropriate
-3. Add a simple interface in the frontend to:
-   - Display the transcript
-   - Allow users to ask questions
-   - Show the agent's responses
+If you would like to skip eval installation instead, there's sample eval outputs and scoring sheets in /results.
 
-### Evaluation Criteria
+### Eval Installation:
 
-Your solution will be evaluated on:
+1. Retrieve your Open AI API key and export to shell:
+   ```
+   export OPENAI_API_KEY={API_KEY_HERE}
+   ```
+2. Under `/llm-evals/` :
+   Clone the OpenAI Evals repo straight from Git:
+   ```
+   git clone https://github.com/openai/evals
+   ```
+3. Under the newly created `/llm-evals/evals`:
 
-- Code organization and quality
-- Implementation of the AI agent
-- User interface design and experience
-- Error handling and edge cases
-- Documentation and comments
+   ```
+   pip install -e . --no-deps
+   pip install -r requirements.txt
+   ```
 
-### Time Expectations
+   - The --no-deps flag is to bypass an occasional issue where installing Evals goes too far down the dependency nest
 
-Plan to spend about 4 hours to complete this exercise. Focus on delivering a working solution that demonstrates your understanding of AI concepts and software engineering principles.
+4. Run the following:
 
-## Project Structure
+   ```
+   python run_eval.py
+   ```
 
-- `/api` - Backend Node.js application
-- `/client` - Frontend React application
-- `/api/data` - Contains the transcript file
-- `docker-compose.yml` - Docker configuration for all services
-
-## Available Scripts
-
-In the API directory:
-
-- `npm run dev` - Start the development server
-- `npm run migration:up` - Run database migrations
-- `npm run test` - Run tests
-
-In the Client directory:
-
-- `npm run dev` - Start the development server
-- `npm run build` - Build for production
-- `npm run test` - Run tests
-
-## Submission
-
-When you're done:
-
-1. Push your changes to your fork of this repository and make it public
-2. Send us the link to your repository
-3. Include any additional notes or documentation about your implementation
-
-Good luck!
+- Alternatively, you can also run the following under the root dir to set up a virtual env + run.en:
+  ```
+  npm run run-evals
+  ```

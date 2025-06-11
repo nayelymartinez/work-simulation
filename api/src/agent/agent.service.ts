@@ -18,7 +18,7 @@ import {
   formatDateTime,
   sanitizeTranscriptContent,
 } from './utils/utils';
-import { summarizeChunkWithLangChain } from './summarizer';
+import { summarizeChunkWithLangChain } from './services/langchain.service';
 import { PatientRecord } from 'src/db/types/patient-record.type';
 import { TranscriptRecord } from 'src/db/types/transcript-record.type';
 import { UserRecord } from 'src/db/types/user-record.type';
@@ -34,6 +34,10 @@ export class AgentService {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     const config = {
       apiKey: apiKey,
+      baseURL: 'https://oai.helicone.ai/v1',
+      defaultHeaders: {
+        'Helicone-Auth': `Bearer ${this.configService.get<string>('HELICONE_API_KEY')}`,
+      },
     };
     this.openai = new OpenAI(config);
 
@@ -49,13 +53,13 @@ export class AgentService {
   }
 
   /*
+  TODO: Pre-process transcripts to avoid real-time chunking, sanitization, and summarization calls to LLM
+  
   The agent uses MCP protocol to send chat messages to the LLM and LangChain for summarization (chunks or whole transcript)
   Because of this, we can easily swap out LLMs
   If the transcript is:
   - <8k tokens, we send the whole transcript to LLM
   - 8k+ tokens, we chunk the transcript by therapist questions, summarize each chunk via LangChain, and send the summaries to LLM
-
-    TODO: Pre-process transcripts to avoid real-time chunking, sanitization, and summarization calls to LLM
   */
   async answerQuestion(
     user_id: number,

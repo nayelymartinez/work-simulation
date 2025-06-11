@@ -3,5 +3,8 @@
     "@langchain/core": "^0.3.57",
     "@langchain/openai": "^0.5.12",
     "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "scripts": {
+    "run-evals": "cd evals && python3 -m venv .venv && source .venv/bin/activate && python run_eval.py"
   }
 }
