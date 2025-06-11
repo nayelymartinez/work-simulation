@@ -7,10 +7,6 @@ var fs = require('fs');
 var path = require('path');
 var Promise;
 
-/**
- * We receive the dbmigrate dependency from dbmigrate initially.
- * This enables us to not have to rely on NODE_PATH.
- */
 exports.setup = function (options, seedLink) {
   dbm = options.dbmigrate;
   type = dbm.dataType;
@@ -22,13 +18,11 @@ exports.up = function (db) {
   var filePath = path.join(
     __dirname,
     'sqls',
-    '20250519151924-create-users-table-up.sql',
+    '20250609225810-add-transcripts-and-qa-logs-up.sql',
   );
   return new Promise(function (resolve, reject) {
     fs.readFile(filePath, { encoding: 'utf-8' }, function (err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
-
       resolve(data);
     });
   }).then(function (data) {
@@ -37,16 +31,15 @@ exports.up = function (db) {
 };
 
 exports.down = function (db) {
+  // If you have a down migration SQL file, reference it here.
   var filePath = path.join(
     __dirname,
     'sqls',
-    '20250519151924-create-users-table-down.sql',
+    '20250609225810-add-transcripts-and-qa-logs-down.sql',
   );
   return new Promise(function (resolve, reject) {
     fs.readFile(filePath, { encoding: 'utf-8' }, function (err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
-
       resolve(data);
     });
   }).then(function (data) {

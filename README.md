@@ -5,23 +5,80 @@ This repository contains a full-stack application scaffold for a work simulation
 ## Project Overview
 
 The project consists of:
+
 - A React frontend (`client`)
 - A NestJS backend (`api`)
 - A PostgreSQL database
 - A sample transcript for the AI agent to analyze
 
-## Getting Started
+## Setup
 
-1. Clone this repository
-2. From the root of the project, start the application:
+0. Under the root directory, create your .env file and populate with the following:
+   ```
+   OPENAI_API_KEY={YOUR_OPENAI_API_KEY}
+   DATABASE_URL=postgres://postgres:postgres@db:5432/appdb
+   MAX_SUMMARY_TOKENS=6000
+   AGENT_LLM=gpt-4-turbo
+   SUMMARIZER_LLM=gpt-4.1
+   ```
+1. From the root of the project, start the application:
    ```bash
    docker compose up --build
    ```
-3. In a new terminal, run the database migrations:
+2. In a new terminal, run the database migrations:
    ```bash
    docker compose run api npm run migration:up
    ```
+3. In /api:
+
+   ```
+   docker compose run --rm api npx ts-node scripts/loadTranscript.ts
+   ```
+
+   This will load the transcript into the DB
+
 4. Visit [localhost:5173](http://localhost:5173) to verify the application is running
+
+## Frontend:
+
+#### Core Technologies
+
+- **React** – JavaScript library for building user interfaces.
+- **TypeScript** – Typed superset of JavaScript for safer, scalable code.
+- **Vite** – Fast development server and bundler for modern web apps.
+
+#### UI & Styling
+
+- **Chakra UI** – Accessible, composable component library.
+
+#### HTTP & State
+
+- **Axios** – Promise-based HTTP client for the browser.
+
+## Backend:
+
+This API is built with **NestJS**. Additional frameworks and libraries added include:
+
+#### AI & Language Processing
+
+- **LangChain** (`langchain`, `@langchain/core`, `@langchain/openai`) – Framework for building language model applications.
+- **OpenAI SDK** (`openai`) – Interacts with OpenAI's models for generating completions, embeddings, etc.
+- **GPT-3 Encoder** (`gpt-3-encoder`) – Tokenization utility for managing LLM input/output lengths.
+
+#### Database & ORM
+
+- **Kysely** – Type-safe SQL query builder for TypeScript.
+- **pg** – PostgreSQL driver for Node.js.
+- **db-migrate / db-migrate-pg** – Lightweight, CLI-driven database migration tool.
+
+#### Validation & Transformation
+
+- **class-validator** – Declarative validation for objects.
+- **class-transformer** – Transforms plain objects into class instances.
+
+#### Caching & Queuing
+
+- **ioredis** – Fast Redis client, often used for caching, pub/sub, or queues.
 
 ## The Challenge
 
@@ -42,6 +99,7 @@ Your task is to create a simple AI agent that can answer questions about the con
 ### Evaluation Criteria
 
 Your solution will be evaluated on:
+
 - Code organization and quality
 - Implementation of the AI agent
 - User interface design and experience
@@ -62,11 +120,13 @@ Plan to spend about 4 hours to complete this exercise. Focus on delivering a wor
 ## Available Scripts
 
 In the API directory:
+
 - `npm run dev` - Start the development server
 - `npm run migration:up` - Run database migrations
 - `npm run test` - Run tests
 
 In the Client directory:
+
 - `npm run dev` - Start the development server
 - `npm run build` - Build for production
 - `npm run test` - Run tests
@@ -74,6 +134,7 @@ In the Client directory:
 ## Submission
 
 When you're done:
+
 1. Push your changes to your fork of this repository and make it public
 2. Send us the link to your repository
 3. Include any additional notes or documentation about your implementation
