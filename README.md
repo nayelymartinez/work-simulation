@@ -1,5 +1,9 @@
 # Blueprint AI: Transcript Q&A Agent
 
+<p align="center">
+  <img src="images/preview.png" alt="App Preview" width="500" style="border:2px solid #ccc; border-radius:8px;"/>
+</p>
+
 A question-answering agent integrated into a full-stack application for a work simulation exercise.
 
 ##### Key Highlights:
@@ -94,13 +98,13 @@ Our favorite part! LLM evaluation here's done with the [OpenAI Evals](https://pl
 
 **Note:** This app uses the OpenAI Evals framework to improve agent performance (see `/evals`). Fair warning: It is a pretty large package, so may take a while to install.
 
-If you would like to skip eval installation instead, there's sample eval outputs and scoring sheets in /results.
-
 ### Eval Installation:
+
+Assuming virtual env is activated:
 
 1. Retrieve your Open AI API key and export to shell:
    ```
-   export OPENAI_API_KEY={API_KEY_HERE}
+   export OPENAI_API_KEY="{API_KEY_HERE}"
    ```
 2. Under `/llm-evals/` :
    Clone the OpenAI Evals repo straight from Git:
@@ -110,19 +114,19 @@ If you would like to skip eval installation instead, there's sample eval outputs
 3. Under the newly created `/llm-evals/evals`:
 
    ```
+   mkdir registry
+   cd registry
+   mkdir evals
+   ln -s ../../../therapy_questions.yaml therapist_agent_qa.yaml
    pip install -e . --no-deps
    pip install -r requirements.txt
    ```
 
    - The --no-deps flag is to bypass an occasional issue where installing Evals goes too far down the dependency nest
 
-4. Run the following:
+4. Under /llm-evals/evals:
 
    ```
-   python run_eval.py
+   export PYTHONPATH="../:$PYTHONPATH"
+   oaieval http_agent therapist_agent_qa --max_samples 25
    ```
-
-- Alternatively, you can also run the following under the root dir to set up a virtual env + run.en:
-  ```
-  npm run run-evals
-  ```

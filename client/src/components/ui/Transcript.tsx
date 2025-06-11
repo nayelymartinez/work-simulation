@@ -128,7 +128,7 @@ export function Transcript() {
           <option value={2}>Patient: Alex Gonzalez (MRN #: 711)</option>
         </Select>
 
-        <Box bg="rgb(133, 159, 61)" px={4} py={2} rounded="md" shadow="md">
+        <Box bg="purple.500" px={4} py={2} rounded="md" shadow="md">
           <Text color="white" fontWeight="medium" fontSize="sm">
             Therapist: Dr. Doe
           </Text>
